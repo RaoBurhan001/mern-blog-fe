@@ -1,0 +1,54 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../../api';
+import PostItem from '../../components/posts/PostItem';
+import Button from '../../components/common/Button';
+import Spinner from '../../components/common/Spinner';
+
+const AuthorDashboard = () => {
+
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/posts');
+      setPosts(res.data.posts || []);
+    } catch {
+      setPosts([]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this post?')) return;
+    try {
+      await api.delete(`/posts/${id}`);
+      setPosts(posts.filter(p => p._id !== id));
+    } catch {
+      alert('Failed to delete post.');
+      console.error('Failed to delete post');
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">My Posts</h2>
+        <Link to="/create-post"><Button>Create Post</Button></Link>
+      </div>
+      {loading ? <Spinner /> : (
+        posts.length ? posts.map(post => (
+          <PostItem key={post._id} post={post} onDelete={handleDelete} />
+        )) : <div>No posts found.</div>
+      )}
+    </div>
+  );
+};
+
+export default AuthorDashboard;
